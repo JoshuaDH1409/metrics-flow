@@ -1,13 +1,14 @@
 const express = require('express');
 const multer = require('multer');
+const os = require('os');
 const { getWorkspaces, getMetrics } = require('../controllers/metricsController');
 const { generateInsights } = require('../controllers/insightsController');
 const { uploadCSV } = require('../controllers/uploadController');
 
 const router = express.Router();
 
-// Multer config for CSV uploads
-const upload = multer({ dest: 'uploads/' });
+// Multer config for CSV uploads using OS temp directory (Vercel compatible)
+const upload = multer({ dest: os.tmpdir() });
 
 // Workspaces & Metrics
 router.get('/workspaces', getWorkspaces);

@@ -10,7 +10,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const app = express();
 
 // Middlewares
-app.use(helmet());
+// app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
 app.use(cors());
 app.use(express.json());
