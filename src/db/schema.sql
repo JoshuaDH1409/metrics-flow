@@ -1,0 +1,48 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE IF NOT EXISTS tenants (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  role VARCHAR(50) CHECK (role IN ('ADMIN', 'VIEWER')) DEFAULT 'VIEWER',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS metrics_summaries (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  period VARCHAR(50) NOT NULL, -- e.g., '2026-10'
+  gross_revenue DECIMAL(15, 2) DEFAULT 0.00,
+  cac DECIMAL(15, 2) DEFAULT 0.00,
+  active_accounts INTEGER DEFAULT 0,
+  operating_margin DECIMAL(5, 2) DEFAULT 0.00,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, period)
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  folio VARCHAR(100) NOT NULL,
+  client_name VARCHAR(255) NOT NULL,
+  service_concept VARCHAR(255),
+  amount DECIMAL(15, 2) NOT NULL,
+  status VARCHAR(50) CHECK (status IN ('Pagado', 'Pendiente', 'En Proceso')),
+  date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, folio)
+);
+
+CREATE TABLE IF NOT EXISTS executive_insights (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  bullet_points JSONB NOT NULL,
+  generated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

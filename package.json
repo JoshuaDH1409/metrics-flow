@@ -1,0 +1,36 @@
+{
+  "name": "metricsflow-saas",
+  "version": "1.0.0",
+  "description": "B2B Client Portal & Executive Metrics Dashboard with Automated Insights",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "saas",
+    "dashboard",
+    "b2b",
+    "analytics",
+    "executive-portal",
+    "astro",
+    "tailwind"
+  ],
+  "author": "Joshua Andrés Díaz Hernández",
+  "license": "MIT",
+  "dependencies": {
+    "@google/genai": "^2.25.0",
+    "compression": "^1.8.2",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.2.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.22.3",
+    "helmet": "^8.3.0",
+    "multer": "^2.4.0",
+    "pg": "^8.23.1",
+    "zod": "^4.6.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

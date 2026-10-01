@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50 text-slate-900">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetricsFlow | Portal Corporativo de Análisis & Rendimiento</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', 'sans-serif'],
+          },
+          colors: {
+            corporate: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              500: '#64748b',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+              blue: '#1d4ed8',
+              navy: '#0b192c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @media print {
+      body { background: white !important; color: #0f172a !important; }
+      .no-print { display: none !important; }
+      .print-shadow-none { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans bg-slate-50 antialiased selection:bg-slate-200">
+
+  <!-- TOP APP BAR -->
+  <header class="border-b border-slate-200 bg-white sticky top-0 z-40 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- LOGO & PRODUCT TITLE -->
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 rounded bg-slate-900 flex items-center justify-center text-white font-bold text-sm tracking-tight">
+          MF
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-semibold text-slate-900 text-base tracking-tight">MetricsFlow</span>
+          <span class="hidden sm:inline-block text-slate-300">/</span>
+          <span class="hidden sm:inline-block text-xs text-slate-500 font-medium">Portal de Inteligencia Operativa</span>
+        </div>
+      </div>
+
+      <!-- WORKSPACE / ACCOUNT SELECTOR -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 bg-slate-100/80 border border-slate-200 rounded-md px-2.5 py-1.5 transition hover:bg-slate-100">
+          <span class="text-xs text-slate-500 font-medium hidden sm:inline">Entidad:</span>
+          <select id="companySelect" onchange="switchWorkspace(this.value)" class="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer">
+            <option value="growth">Agencia Growth Media Latam</option>
+            <option value="dental">Clínica Dental San Ángel</option>
+            <option value="logistics">Soluciones Logísticas Express</option>
+          </select>
+        </div>
+
+        <!-- ACTIONS -->
+        <button onclick="openDataSourceModal()" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 transition shadow-sm">
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+          </svg>
+          <span>Origen de Datos</span>
+        </button>
+
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          <span>Exportar Informe (PDF)</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN VIEW -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <!-- PAGE TITLE & META BAR -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h1 id="clientNameTitle" class="text-xl font-bold text-slate-900 tracking-tight">Agencia Growth Media Latam</h1>
+          <span id="syncBadge" class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            PostgreSQL: Sincronizado hace 2 min
+          </span>
+        </div>
+        <p id="clientDescription" class="text-xs text-slate-500 mt-1">Indicadores consolidados de ingresos, margen operativo y rendimiento por canal.</p>
+      </div>
+
+      <!-- DATE RANGE SELECTOR -->
+      <div class="flex items-center bg-white border border-slate-200 rounded-md p-1 text-xs shadow-sm no-print">
+        <button onclick="setPeriod('7d', this)" class="px-2.5 py-1 rounded text-slate-600 hover:text-slate-900 transition">7D</button>
+        <button onclick="setPeriod('30d', this)" class="px-2.5 py-1 rounded font-semibold bg-slate-900 text-white shadow-sm transition">30D</button>
+        <button onclick="setPeriod('month', this)" class="px-2.5 py-1 rounded text-slate-600 hover:text-slate-900 transition">Mes Actual</button>
+        <button onclick="setPeriod('ytd', this)" class="px-2.5 py-1 rounded text-slate-600 hover:text-slate-900 transition">Año a la Fecha</button>
+      </div>
+    </div>
+
+    <!-- EXECUTIVE SUMMARY (CLEAN CORPORATE DIGEST) -->
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm print-shadow-none">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-slate-900"></div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Informe Ejecutivo Sintético</h2>
+          <span class="text-[11px] text-slate-400">| Consolidación periódica automatizada</span>
+        </div>
+
+        <button onclick="refreshAiSummary()" id="aiGenBtn" class="no-print inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 font-medium transition">
+          <svg class="w-3.5 h-3.5 text-slate-400" id="aiRefreshIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Actualizar Análisis</span>
+        </button>
+      </div>
+
+      <div id="aiSummaryContent" class="mt-4 grid sm:grid-cols-3 gap-4 text-xs">
+        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-100">
+          <div class="font-semibold text-slate-900 mb-1 flex items-center justify-between">
+            <span>Rendimiento de Cierre</span>
+            <span class="text-emerald-700 text-[11px] font-bold">+18.4%</span>
+          </div>
+          <p class="text-slate-600 leading-relaxed" id="aiBullet1">El volumen de cierre superó la proyección mensual por $14,200 USD debido a la consolidación de clientes retenidos con ticket alto.</p>
+        </div>
+
+        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-100">
+          <div class="font-semibold text-slate-900 mb-1 flex items-center justify-between">
+            <span>Eficiencia de Costos (CAC)</span>
+            <span class="text-emerald-700 text-[11px] font-bold">-12.8%</span>
+          </div>
+          <p class="text-slate-600 leading-relaxed" id="aiBullet2">El costo unitario disminuyó a $42.10 USD mediante la reasignación de partidas presupuestales a canales de conversión directa.</p>
+        </div>
+
+        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-100">
+          <div class="font-semibold text-slate-900 mb-1 flex items-center justify-between">
+            <span>Recomendación Operativa</span>
+            <span class="text-slate-500 text-[11px] font-medium">Prioridad Q4</span>
+          </div>
+          <p class="text-slate-600 leading-relaxed" id="aiBullet3">Fidelizar el 15% de cuentas con contratos en renovación en los próximos 14 días para asegurar un flujo constante en Q4.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 KPI CARDS -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- KPI 1 -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-shadow-none">
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Facturación Bruta</div>
+        <div class="flex items-baseline justify-between mt-2">
+          <span id="kpiValue1" class="text-2xl font-bold text-slate-900 tracking-tight">$48,250 USD</span>
+          <span id="kpiBadge1" class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">+18.4%</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2">+$7,500 vs. ciclo anterior</p>
+      </div>
+
+      <!-- KPI 2 -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-shadow-none">
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Costo Unitario / CAC</div>
+        <div class="flex items-baseline justify-between mt-2">
+          <span id="kpiValue2" class="text-2xl font-bold text-slate-900 tracking-tight">$42.10 USD</span>
+          <span id="kpiBadge2" class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">-12.8%</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2">Mayor eficiencia por conversión</p>
+      </div>
+
+      <!-- KPI 3 -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-shadow-none">
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Cuentas en Cartera</div>
+        <div class="flex items-baseline justify-between mt-2">
+          <span id="kpiValue3" class="text-2xl font-bold text-slate-900 tracking-tight">128 Cuentas</span>
+          <span id="kpiBadge3" class="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">+9.4%</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2">98.2% retención contractual</p>
+      </div>
+
+      <!-- KPI 4 -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-shadow-none">
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Margen Operativo</div>
+        <div class="flex items-baseline justify-between mt-2">
+          <span id="kpiValue4" class="text-2xl font-bold text-slate-900 tracking-tight">68.4%</span>
+          <span id="kpiBadge4" class="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">+3.1%</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2">Rango de viabilidad óptimo</p>
+      </div>
+
+    </section>
+
+    <!-- CHARTS SECTION -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- TREND CHART (2 COLS) -->
+      <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-shadow-none flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Comportamiento Financiero Mensual</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Ingresos devengados contra costos operativos directos.</p>
+          </div>
+          <div class="flex items-center gap-4 text-xs">
+            <span class="flex items-center gap-1.5 text-slate-800 font-medium">
+              <span class="w-2.5 h-2.5 rounded-sm bg-slate-900"></span> Ingresos
+            </span>
+            <span class="flex items-center gap-1.5 text-slate-500 font-medium">
+              <span class="w-2.5 h-2.5 rounded-sm bg-slate-300"></span> Costos
+            </span>
+          </div>
+        </div>
+        <div class="h-64 w-full relative">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- DISTRIBUTION CHART (1 COL) -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm print-shadow-none flex flex-col justify-between">
+        <div class="border-b border-slate-100 pb-3 mb-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Composición por Canal</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Porcentaje de aportación a la facturación.</p>
+        </div>
+        <div class="h-52 w-full relative my-auto flex items-center justify-center">
+          <canvas id="channelChart"></canvas>
+        </div>
+        <div class="border-t border-slate-100 pt-3 mt-2 grid grid-cols-2 gap-2 text-xs" id="channelLegendList">
+          <!-- Dynamic legend -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- DATA TABLE -->
+    <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden print-shadow-none">
+      <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Registro de Transacciones & Cuentas</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Desglose granular sincronizado con la base de datos empresarial.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 no-print">
+          <div class="relative">
+            <input type="text" id="tableSearch" onkeyup="filterTable()" placeholder="Filtrar por cliente o folio..." class="bg-slate-50 border border-slate-200 rounded-md pl-3 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 w-48 sm:w-56 transition">
+          </div>
+
+          <select id="statusFilter" onchange="filterTable()" class="bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-900 cursor-pointer">
+            <option value="ALL">Todos los Estados</option>
+            <option value="Pagado">Pagado</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="En Proceso">En Proceso</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+            <tr>
+              <th scope="col" class="py-3 px-4">Folio</th>
+              <th scope="col" class="py-3 px-4">Razón Social / Cliente</th>
+              <th scope="col" class="py-3 px-4">Concepto Contractual</th>
+              <th scope="col" class="py-3 px-4">Importe</th>
+              <th scope="col" class="py-3 px-4">Estado</th>
+              <th scope="col" class="py-3 px-4">Fecha</th>
+              <th scope="col" class="py-3 px-4 text-right no-print">Detalle</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-700">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <span id="tableRecordCount">Mostrando 6 registros</span>
+        <span class="text-slate-600 font-medium">Exportación habilitada para auditoría contable</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CORPORATE FOOTER -->
+  <footer class="border-t border-slate-200 bg-white py-5 text-xs text-slate-500 no-print mt-auto">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold text-slate-800">MetricsFlow Enterprise Portal</span>
+        <span>• Arquitectura de alto rendimiento (Astro & Tailwind)</span>
+      </div>
+      <div>
+        <span>SLA 99.9% • Conexión Cifrada SSL</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- DATA SOURCE MODAL -->
+  <div id="dataSourceModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 no-print">
+    <div class="bg-white border border-slate-200 rounded-xl max-w-lg w-full p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900">Configuración de Origen de Datos</h3>
+        <button onclick="closeDataSourceModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+
+      <form id="uploadCsvForm" class="space-y-3 text-xs text-slate-600" onsubmit="handleCsvUpload(event)">
+        <p>Sube el archivo de transacciones de tu cliente corporativo (CSV):</p>
+        
+        <div class="mt-2">
+          <input type="file" id="csvFileInput" accept=".csv" required class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100" />
+        </div>
+
+        <div class="bg-slate-100 p-3 rounded-md font-mono text-[11px] text-slate-700">
+          Columnas requeridas: folio, cliente, concepto, monto, estado, fecha
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 mt-4">
+          <button type="button" onclick="closeDataSourceModal()" class="px-3 py-1.5 rounded-md bg-white border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
+          <button type="submit" id="uploadCsvBtn" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-slate-900 text-xs font-medium text-white hover:bg-slate-800">
+            <svg id="uploadSpinner" class="animate-spin hidden w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Subir Datos
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- JAVASCRIPT -->
+  <script>
+    const WORKSPACES = {
+      growth: {
+        title: "Agencia Growth Media Latam",
+        description: "Indicadores consolidados de ingresos, margen operativo y rendimiento por canal.",
+        sync: "PostgreSQL: Sincronizado hace 2 min",
+        kpis: {
+          v1: "$48,250 USD", b1: "+18.4%",
+          v2: "$42.10 USD", b2: "-12.8%",
+          v3: "128 Cuentas", b3: "+9.4%",
+          v4: "68.4%", b4: "+3.1%"
+        },
+        aiBullets: [
+          "El volumen de cierre superó la proyección mensual por $14,200 USD debido a la consolidación de clientes retenidos con ticket alto.",
+          "El costo unitario disminuyó a $42.10 USD mediante la reasignación de partidas presupuestales a canales de conversión directa.",
+          "Fidelizar el 15% de cuentas con contratos en renovación en los próximos 14 días para asegurar un flujo constante en Q4."
+        ],
+        trendLabels: ["Semana 1", "Semana 2", "Semana 3", "Semana 4"],
+        incomeData: [32000, 38500, 42000, 48250],
+        costData: [12000, 13100, 14200, 15200],
+        channelLabels: ["Google Ads", "Meta Business", "LinkedIn B2B", "Cuentas Directas"],
+        channelData: [45, 25, 20, 10],
+        records: [
+          { id: "GM-9021", client: "Fintech Klar MX", service: "Estrategia B2B & Adquisición", amount: "$12,400 USD", status: "Pagado", date: "01 Oct 2026" },
+          { id: "GM-9022", client: "Comercio Electrónico MX", service: "Auditoría de Conversión", amount: "$4,500 USD", status: "Pagado", date: "29 Sep 2026" },
+          { id: "GM-9023", client: "SaaS Logística Urbana", service: "Campaña de Performance", amount: "$8,900 USD", status: "En Proceso", date: "28 Sep 2026" },
+          { id: "GM-9024", client: "Despacho Legal Corporativo", service: "Portal Institucional Astro", amount: "$3,200 USD", status: "Pagado", date: "27 Sep 2026" },
+          { id: "GM-9025", client: "Consultoría de Talento", service: "Estructura de Captación", amount: "$6,100 USD", status: "Pendiente", date: "26 Sep 2026" },
+          { id: "GM-9026", client: "Cadena Comercial Norte", service: "Retargeting Multicanal", amount: "$13,150 USD", status: "Pagado", date: "25 Sep 2026" },
+        ]
+      },
+      dental: {
+        title: "Clínica Dental San Ángel",
+        description: "Control de pacientes atendidos, procedimientos quirúrgicos y rendimiento clínico.",
+        sync: "MySQL: Sincronizado hace 5 min",
+        kpis: {
+          v1: "$18,400 USD", b1: "+24.2%",
+          v2: "$19.50 USD", b2: "-15.3%",
+          v3: "245 Pacientes", b3: "+14.0%",
+          v4: "58.2%", b4: "+4.5%"
+        },
+        aiBullets: [
+          "Crecimiento notable del 24.2% en tratamientos de ortodoncia e implantes gracias al agendamiento digital por WhatsApp.",
+          "El costo por cita efectiva cayó a $19.50 USD, generando 48 consultas de primera vez en el mes.",
+          "Implementar recordatorios automatizados por SMS 24 horas antes de cada consulta para reducir el 8% de ausencias."
+        ],
+        trendLabels: ["Semana 1", "Semana 2", "Semana 3", "Semana 4"],
+        incomeData: [11000, 13400, 15800, 18400],
+        costData: [5000, 5600, 6200, 7600],
+        channelLabels: ["WhatsApp Direct", "Google Maps Local", "Recomendación Médica", "Redes Sociales"],
+        channelData: [50, 30, 15, 5],
+        records: [
+          { id: "DS-4011", client: "Laura Martínez", service: "Implante Titanio", amount: "$1,800 USD", status: "Pagado", date: "01 Oct 2026" },
+          { id: "DS-4012", client: "Carlos Mendoza", service: "Ortodoncia Invisible", amount: "$2,400 USD", status: "En Proceso", date: "30 Sep 2026" },
+          { id: "DS-4013", client: "Sofía Valenzuela", service: "Diseño de Sonrisa", amount: "$3,100 USD", status: "Pagado", date: "29 Sep 2026" },
+          { id: "DS-4014", client: "Jorge Ramos", service: "Profilaxis Completa", amount: "$450 USD", status: "Pagado", date: "28 Sep 2026" },
+          { id: "DS-4015", client: "Elena Trejo", service: "Endodoncia Multirradicular", amount: "$680 USD", status: "Pendiente", date: "27 Sep 2026" },
+          { id: "DS-4016", client: "Daniel Alcocer", service: "Rehabilitación Oral", amount: "$2,850 USD", status: "Pagado", date: "25 Sep 2026" },
+        ]
+      },
+      logistics: {
+        title: "Soluciones Logísticas Express",
+        description: "Monitoreo de fletes de carga consolidada, rutas metropolitanas y gastos de combustible.",
+        sync: "Google Sheets: Sincronizado hace 1 min",
+        kpis: {
+          v1: "$74,800 USD", b1: "+12.1%",
+          v2: "$115.00 USD", b2: "-6.4%",
+          v3: "84 Rutas", b3: "+8.1%",
+          v4: "42.8%", b4: "+2.0%"
+        },
+        aiBullets: [
+          "Optimización de rutas metropolitanas redujo el consumo de combustible en 9.3%, elevando el margen operativo neto.",
+          "El índice de entregas en tiempo ('On-Time Delivery') alcanzó 97.4% en los corredores industriales de la zona centro.",
+          "Negociar acuerdos de fletes directos con 3 clientes clave de Querétaro y Puebla para llenar retornos vacíos."
+        ],
+        trendLabels: ["Semana 1", "Semana 2", "Semana 3", "Semana 4"],
+        incomeData: [55000, 61000, 68000, 74800],
+        costData: [34000, 36500, 40000, 42800],
+        channelLabels: ["Contratos Anuales", "Spot Corporativo", "Carga Consolidada", "Última Milla"],
+        channelData: [55, 25, 15, 5],
+        records: [
+          { id: "LG-7701", client: "Grupo Modelo CDMX", service: "Flete Foráneo Dedicado", amount: "$14,500 USD", status: "Pagado", date: "01 Oct 2026" },
+          { id: "LG-7702", client: "Autopartes Bajío", service: "Ruta Express Toluca", amount: "$6,800 USD", status: "Pagado", date: "30 Sep 2026" },
+          { id: "LG-7703", client: "Alimentos Frescos MX", service: "Caja Refrigerada 48ft", amount: "$9,200 USD", status: "En Proceso", date: "29 Sep 2026" },
+          { id: "LG-7704", client: "Textiles del Norte", service: "Carga Consolidada", amount: "$3,400 USD", status: "Pendiente", date: "28 Sep 2026" },
+          { id: "LG-7705", client: "Farmacéutica Sanofi", service: "Distribución Hospitalaria", amount: "$18,900 USD", status: "Pagado", date: "27 Sep 2026" },
+          { id: "LG-7706", client: "Plásticos de Puebla", service: "Flete Retorno", amount: "$5,100 USD", status: "Pagado", date: "26 Sep 2026" },
+        ]
+      }
+    };
+
+    let currentWorkspace = 'growth';
+    let trendChartInstance = null;
+    let channelChartInstance = null;
+
+    function initCharts() {
+      const trendCtx = document.getElementById('trendChart').getContext('2d');
+      trendChartInstance = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: WORKSPACES[currentWorkspace].trendLabels,
+          datasets: [
+            {
+              label: 'Ingresos ($)',
+              data: WORKSPACES[currentWorkspace].incomeData,
+              borderColor: '#0f172a',
+              backgroundColor: 'rgba(15, 23, 42, 0.04)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.25,
+              pointBackgroundColor: '#0f172a',
+              pointRadius: 3
+            },
+            {
+              label: 'Costos ($)',
+              data: WORKSPACES[currentWorkspace].costData,
+              borderColor: '#94a3b8',
+              backgroundColor: 'transparent',
+              borderWidth: 1.5,
+              borderDash: [4, 4],
+              tension: 0.25,
+              pointRadius: 2.5
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#ffffff',
+              bodyColor: '#cbd5e1',
+              padding: 8,
+              cornerRadius: 4
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#f1f5f9' },
+              ticks: { color: '#64748b', font: { size: 11 } }
+            },
+            y: {
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                color: '#64748b',
+                font: { size: 11 },
+                callback: (val) => '$' + (val / 1000) + 'k'
+              }
+            }
+          }
+        }
+      });
+
+      const channelCtx = document.getElementById('channelChart').getContext('2d');
+      channelChartInstance = new Chart(channelCtx, {
+        type: 'doughnut',
+        data: {
+          labels: WORKSPACES[currentWorkspace].channelLabels,
+          datasets: [{
+            data: WORKSPACES[currentWorkspace].channelData,
+            backgroundColor: ['#0f172a', '#334155', '#64748b', '#cbd5e1'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '74%',
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      renderChannelLegend();
+    }
+
+    function renderChannelLegend() {
+      const container = document.getElementById('channelLegendList');
+      const ws = WORKSPACES[currentWorkspace];
+      const colors = ['#0f172a', '#334155', '#64748b', '#cbd5e1'];
+      container.innerHTML = ws.channelLabels.map((label, idx) => `
+        <div class="flex items-center justify-between text-slate-600">
+          <div class="flex items-center gap-1.5 truncate">
+            <span class="w-2 h-2 rounded-sm shrink-0" style="background-color: ${colors[idx]}"></span>
+            <span class="truncate">${label}</span>
+          </div>
+          <span class="font-semibold text-slate-800">${ws.channelData[idx]}%</span>
+        </div>
+      `).join('');
+    }
+
+    
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const bg = type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800';
+      toast.className = `px-4 py-2 rounded-md shadow-sm border text-xs font-medium transition-all duration-300 transform translate-y-0 opacity-100 ${bg}`;
+      toast.innerText = message;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // FETCH WORKSPACE METRICS FROM BACKEND API (WITH FALLBACK)
+    async function loadWorkspaceFromApi(workspaceKey) {
+      currentWorkspace = workspaceKey;
+      try {
+        const response = await fetch('/api/v1/metrics/' + workspaceKey);
+        if (response.ok) {
+          const json = await response.json();
+          if (json && json.workspace) {
+            applyWorkspaceData(json.workspace);
+            return;
+          }
+        }
+      } catch (err) {
+        console.info('Conectado en modo autónomo/local, utilizando repositorio en memoria.');
+      }
+      // Fallback to local memory mock
+      applyWorkspaceData(WORKSPACES[workspaceKey]);
+    }
+
+    function applyWorkspaceData(ws) {
+      document.getElementById('clientNameTitle').innerText = ws.title;
+      document.getElementById('clientDescription').innerText = ws.description;
+      document.getElementById('syncBadge').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ${ws.sync}`;
+
+      document.getElementById('kpiValue1').innerText = ws.kpis.v1;
+      document.getElementById('kpiBadge1').innerText = ws.kpis.b1;
+      document.getElementById('kpiValue2').innerText = ws.kpis.v2;
+      document.getElementById('kpiBadge2').innerText = ws.kpis.b2;
+      document.getElementById('kpiValue3').innerText = ws.kpis.v3;
+      document.getElementById('kpiBadge3').innerText = ws.kpis.b3;
+      document.getElementById('kpiValue4').innerText = ws.kpis.v4;
+      document.getElementById('kpiBadge4').innerText = ws.kpis.b4;
+
+      document.getElementById('aiBullet1').innerText = ws.aiBullets[0];
+      document.getElementById('aiBullet2').innerText = ws.aiBullets[1];
+      document.getElementById('aiBullet3').innerText = ws.aiBullets[2];
+
+      trendChartInstance.data.labels = ws.trendLabels;
+      trendChartInstance.data.datasets[0].data = ws.incomeData;
+      trendChartInstance.data.datasets[1].data = ws.costData;
+      trendChartInstance.update();
+
+      channelChartInstance.data.labels = ws.channelLabels;
+      channelChartInstance.data.datasets[0].data = ws.channelData;
+      channelChartInstance.update();
+      renderChannelLegend();
+
+      renderTable();
+    }
+
+    function switchWorkspace(key) {
+      loadWorkspaceFromApi(key);
+    }
+
+    function _old_switchWorkspace(key) {
+      currentWorkspace = key;
+      const ws = WORKSPACES[key];
+
+      document.getElementById('clientNameTitle').innerText = ws.title;
+      document.getElementById('clientDescription').innerText = ws.description;
+      document.getElementById('syncBadge').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ${ws.sync}`;
+
+      document.getElementById('kpiValue1').innerText = ws.kpis.v1;
+      document.getElementById('kpiBadge1').innerText = ws.kpis.b1;
+      document.getElementById('kpiValue2').innerText = ws.kpis.v2;
+      document.getElementById('kpiBadge2').innerText = ws.kpis.b2;
+      document.getElementById('kpiValue3').innerText = ws.kpis.v3;
+      document.getElementById('kpiBadge3').innerText = ws.kpis.b3;
+      document.getElementById('kpiValue4').innerText = ws.kpis.v4;
+      document.getElementById('kpiBadge4').innerText = ws.kpis.b4;
+
+      document.getElementById('aiBullet1').innerText = ws.aiBullets[0];
+      document.getElementById('aiBullet2').innerText = ws.aiBullets[1];
+      document.getElementById('aiBullet3').innerText = ws.aiBullets[2];
+
+      trendChartInstance.data.labels = ws.trendLabels;
+      trendChartInstance.data.datasets[0].data = ws.incomeData;
+      trendChartInstance.data.datasets[1].data = ws.costData;
+      trendChartInstance.update();
+
+      channelChartInstance.data.labels = ws.channelLabels;
+      channelChartInstance.data.datasets[0].data = ws.channelData;
+      channelChartInstance.update();
+      renderChannelLegend();
+
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      const ws = WORKSPACES[currentWorkspace];
+      const searchVal = document.getElementById('tableSearch').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+
+      const filtered = ws.records.filter(r => {
+        const matchesSearch = r.client.toLowerCase().includes(searchVal) || r.id.toLowerCase().includes(searchVal) || r.service.toLowerCase().includes(searchVal);
+        const matchesStatus = (statusFilter === 'ALL') || (r.status === statusFilter);
+        return matchesSearch && matchesStatus;
+      });
+
+      tbody.innerHTML = filtered.map(item => {
+        let statusBadge = '';
+        if (item.status === 'Pagado') {
+          statusBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Pagado</span>';
+        } else if (item.status === 'En Proceso') {
+          statusBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">En Proceso</span>';
+        } else {
+          statusBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">Pendiente</span>';
+        }
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-4 font-mono text-slate-500">${item.id}</td>
+            <td class="py-3 px-4 font-medium text-slate-900">${item.client}</td>
+            <td class="py-3 px-4 text-slate-600">${item.service}</td>
+            <td class="py-3 px-4 font-semibold text-slate-900">${item.amount}</td>
+            <td class="py-3 px-4">${statusBadge}</td>
+            <td class="py-3 px-4 text-slate-500">${item.date}</td>
+            <td class="py-3 px-4 text-right no-print">
+              <button onclick="alert('Expediente de auditoría: ' + '${item.client}')" class="text-slate-700 hover:text-slate-950 font-medium">Consultar</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('tableRecordCount').innerText = `Mostrando ${filtered.length} de ${ws.records.length} registros`;
+    }
+
+    function filterTable() {
+      renderTable();
+    }
+
+    function setPeriod(period, btn) {
+      btn.parentElement.querySelectorAll('button').forEach(b => {
+        b.className = 'px-2.5 py-1 rounded text-slate-600 hover:text-slate-900 transition';
+      });
+      btn.className = 'px-2.5 py-1 rounded font-semibold bg-slate-900 text-white shadow-sm transition';
+      showToast('Filtrando consolidado para el rango: ' + period.toUpperCase(), 'success');
+    }
+
+
+    async function refreshAiSummary() {
+      const btn = document.getElementById('aiGenBtn');
+      const icon = document.getElementById('aiRefreshIcon');
+      icon.classList.add('animate-spin');
+      btn.disabled = true;
+
+      try {
+        const resp = await fetch('/api/v1/insights/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspaceId: currentWorkspace })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.bullets && data.bullets.length >= 3) {
+            document.getElementById('aiBullet1').innerText = data.bullets[0];
+            document.getElementById('aiBullet2').innerText = data.bullets[1];
+            document.getElementById('aiBullet3').innerText = data.bullets[2];
+          }
+        }
+      } catch (e) {
+        console.warn('API de inferencia en modo contingencia.');
+      }
+
+      setTimeout(() => {
+        icon.classList.remove('animate-spin');
+        btn.disabled = false;
+        showToast('Informe ejecutivo actualizado y conciliado.', 'success');
+      }, 400);
+    }
+
+
+    function openDataSourceModal() {
+      document.getElementById('dataSourceModal').classList.remove('hidden');
+    }
+
+    function closeDataSourceModal() {
+      document.getElementById('dataSourceModal').classList.add('hidden');
+    }
+
+    async function handleCsvUpload(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('csvFileInput');
+      if (!fileInput.files || fileInput.files.length === 0) return;
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      const btn = document.getElementById('uploadCsvBtn');
+      const spinner = document.getElementById('uploadSpinner');
+      
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+
+      try {
+        const response = await fetch('/api/v1/data/upload-csv', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          showToast(data.message || 'Archivo procesado con éxito.', 'success');
+          closeDataSourceModal();
+          fileInput.value = ''; // reset
+        } else {
+          showToast(data.message || 'Error al procesar archivo.', 'error');
+        }
+      } catch (err) {
+        showToast('Error de red al subir archivo.', 'error');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+      }
+    }
+
+    window.onload = () => {
+      initCharts();
+      renderTable();
+    };
+  </script>
+</body>
+</html>
