@@ -75,6 +75,10 @@
         </div>
 
         <!-- ACTIONS -->
+        <button onclick="openConversionModal()" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-sm border border-emerald-700">
+          Activar en tu Empresa
+        </button>
+
         <button onclick="openDataSourceModal()" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 transition shadow-sm">
           <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
@@ -318,27 +322,87 @@
       </div>
 
       <form id="uploadCsvForm" class="space-y-3 text-xs text-slate-600" onsubmit="handleCsvUpload(event)">
-        <p>Sube el archivo de transacciones de tu cliente corporativo (CSV):</p>
+        <p>Sube el archivo de transacciones de tu empresa (CSV) para actualizar las gráficas en tiempo real:</p>
         
-        <div class="mt-2">
-          <input type="file" id="csvFileInput" accept=".csv" required class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100" />
+        <div id="dropZone" class="mt-2 border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition cursor-pointer flex flex-col items-center justify-center" onclick="document.getElementById('csvFileInput').click()" ondragover="event.preventDefault(); this.classList.add('bg-slate-100')" ondragleave="this.classList.remove('bg-slate-100')" ondrop="handleFileDrop(event)">
+          <svg class="w-8 h-8 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+          <span class="font-medium text-slate-700">Haz clic para seleccionar o arrastra tu archivo aquí</span>
+          <span class="text-[10px] text-slate-400 mt-1">Solo formato .CSV soportado (UTF-8)</span>
+          <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileSelect(event)" />
         </div>
 
-        <div class="bg-slate-100 p-3 rounded-md font-mono text-[11px] text-slate-700">
-          Columnas requeridas: folio, cliente, concepto, monto, estado, fecha
+        <div class="flex items-center justify-between mt-2">
+          <div class="bg-slate-100 px-3 py-2 rounded-md font-mono text-[10px] text-slate-600 flex-1">
+            Columnas esperadas: Folio, Cliente, Concepto, Monto, Estado, Fecha, Canal
+          </div>
+          <button type="button" onclick="downloadCsvTemplate()" class="ml-2 px-3 py-2 rounded-md bg-white border border-slate-200 text-[11px] font-medium text-slate-700 hover:bg-slate-50 whitespace-nowrap shadow-sm">
+            📥 Descargar Plantilla
+          </button>
         </div>
 
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 mt-4">
-          <button type="button" onclick="closeDataSourceModal()" class="px-3 py-1.5 rounded-md bg-white border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
-          <button type="submit" id="uploadCsvBtn" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-slate-900 text-xs font-medium text-white hover:bg-slate-800">
-            <svg id="uploadSpinner" class="animate-spin hidden w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Subir Datos
-          </button>
+          <button type="button" onclick="closeDataSourceModal()" class="px-5 py-2 rounded-md bg-white border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50">Cerrar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- CONVERSION MODAL -->
+  <div id="conversionModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 no-print">
+    <div class="bg-white border border-slate-200 rounded-xl max-w-2xl w-full p-8 shadow-2xl space-y-6 relative">
+      <button onclick="closeConversionModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">✕</button>
+      
+      <div class="text-center space-y-2">
+        <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Potencia tu Toma de Decisiones</h2>
+        <p class="text-sm text-slate-600">Implementa MetricsFlow en tu empresa y consolida tus métricas en tiempo real de forma profesional.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-6 mt-6">
+        <!-- PLAN A -->
+        <div class="border border-slate-200 rounded-xl p-6 bg-slate-50 flex flex-col h-full">
+          <div class="mb-4">
+            <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-200 text-slate-700 mb-2">Pago Único</span>
+            <h3 class="text-lg font-bold text-slate-900">Setup Express B2B</h3>
+            <div class="mt-2 flex items-baseline text-slate-900">
+              <span class="text-3xl font-extrabold tracking-tight">$199</span>
+              <span class="text-sm font-medium text-slate-500 ml-1">USD</span>
+            </div>
+          </div>
+          <ul class="text-xs text-slate-600 space-y-3 mb-6 flex-1">
+            <li class="flex gap-2"><span>✓</span>Conexión llave en mano (PostgreSQL, MySQL, Sheets)</li>
+            <li class="flex gap-2"><span>✓</span>Configuración inicial garantizada en 24 horas</li>
+            <li class="flex gap-2"><span>✓</span>Reportes automáticos habilitados</li>
+            <li class="flex gap-2"><span>✓</span>6 meses de soporte técnico y hosting incluido</li>
+          </ul>
+          <a href="https://wa.me/1234567890?text=Hola,%20me%20interesa%20contratar%20el%20Setup%20Express%20B2B%20por%20$199%20USD" target="_blank" class="block w-full py-2.5 px-4 rounded-lg bg-slate-900 text-center text-white text-sm font-semibold hover:bg-slate-800 transition">Solicitar Setup</a>
+        </div>
+
+        <!-- PLAN B -->
+        <div class="border-2 border-emerald-500 rounded-xl p-6 bg-white flex flex-col h-full relative shadow-sm">
+          <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <span class="bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider py-1 px-3 rounded-full">Recomendado</span>
+          </div>
+          <div class="mb-4">
+            <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 mb-2 border border-emerald-200">Suscripción</span>
+            <h3 class="text-lg font-bold text-slate-900">Licencia Anual Corporativa</h3>
+            <div class="mt-2 flex items-baseline text-slate-900">
+              <span class="text-3xl font-extrabold tracking-tight">$399</span>
+              <span class="text-sm font-medium text-slate-500 ml-1">USD / Año</span>
+            </div>
+          </div>
+          <ul class="text-xs text-slate-600 space-y-3 mb-6 flex-1">
+            <li class="flex gap-2 font-medium text-slate-900"><span>✓</span>Todo lo del plan Setup Express +</li>
+            <li class="flex gap-2"><span>✓</span>Dominio personalizado (reportes.tuempresa.com)</li>
+            <li class="flex gap-2"><span>✓</span>Roles multi-usuario (Admin / Viewer)</li>
+            <li class="flex gap-2"><span>✓</span>Alertas de métricas y exportación avanzada</li>
+          </ul>
+          <a href="https://wa.me/1234567890?text=Hola,%20me%20interesa%20contratar%20la%20Licencia%20Anual%20por%20$399%20USD" target="_blank" class="block w-full py-2.5 px-4 rounded-lg bg-emerald-600 text-center text-white text-sm font-semibold hover:bg-emerald-500 transition shadow-md">Adquirir Licencia</a>
+        </div>
+      </div>
+      
+      <p class="text-center text-xs font-medium text-slate-500 mt-4 bg-slate-50 py-3 rounded-md">
+        🔒 Garantía de servicio: Si el dashboard no queda funcionando con tus datos reales en 24 horas, no pagas nada.
+      </p>
     </div>
   </div>
 
@@ -729,53 +793,175 @@
     }
 
 
-    function openDataSourceModal() {
-      document.getElementById('dataSourceModal').classList.remove('hidden');
+    function openDataSourceModal() { document.getElementById('dataSourceModal').classList.remove('hidden'); }
+    function closeDataSourceModal() { document.getElementById('dataSourceModal').classList.add('hidden'); }
+    function openConversionModal() { document.getElementById('conversionModal').classList.remove('hidden'); }
+    function closeConversionModal() { document.getElementById('conversionModal').classList.add('hidden'); }
+
+    function downloadCsvTemplate() {
+      const csvContent = "Folio,Cliente,Concepto,Monto,Estado,Fecha,Canal\nTR-101,Corporativo Alfa,Servicio Mensual,4500,Pagado,2026-09-28,Directo\nTR-102,Industrias Beta,Auditoría Operativa,3200,Pagado,2026-09-29,LinkedIn B2B\nTR-103,Grupo Delta,Consultoría de Procesos,2800,En Proceso,2026-09-30,Referido\nTR-104,Soluciones Gamma,Mantenimiento TI,1500,Pendiente,2026-10-01,Google Ads\nTR-105,Comercial Épsilon,Implementación Web,5600,Pagado,2026-10-01,Directo";
+      const blob = new Blob(["\uFEFF"+csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "plantilla_metricas_metricsflow.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
-    function closeDataSourceModal() {
-      document.getElementById('dataSourceModal').classList.add('hidden');
-    }
-
-    async function handleCsvUpload(e) {
+    function handleFileDrop(e) {
       e.preventDefault();
-      const fileInput = document.getElementById('csvFileInput');
-      if (!fileInput.files || fileInput.files.length === 0) return;
-
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
-
-      const btn = document.getElementById('uploadCsvBtn');
-      const spinner = document.getElementById('uploadSpinner');
-      
-      btn.disabled = true;
-      spinner.classList.remove('hidden');
-
-      try {
-        const response = await fetch('/api/v1/data/upload-csv', {
-          method: 'POST',
-          body: formData
-        });
-
-        const data = await response.json();
-        if (response.ok && data.success) {
-          showToast(data.message || 'Archivo procesado con éxito.', 'success');
-          closeDataSourceModal();
-          fileInput.value = ''; // reset
-        } else {
-          showToast(data.message || 'Error al procesar archivo.', 'error');
-        }
-      } catch (err) {
-        showToast('Error de red al subir archivo.', 'error');
-      } finally {
-        btn.disabled = false;
-        spinner.classList.add('hidden');
+      e.currentTarget.classList.remove('bg-slate-100');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        processCsvClientSide(e.dataTransfer.files[0]);
       }
+    }
+
+    function handleFileSelect(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        processCsvClientSide(e.target.files[0]);
+      }
+    }
+
+    function handleCsvUpload(e) { e.preventDefault(); }
+
+    function processCsvClientSide(file) {
+      if(!file.name.toLowerCase().endsWith('.csv') && !file.name.toLowerCase().endsWith('.txt')) {
+        showToast('Por favor sube un archivo CSV válido.', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        parseAndApplyCsv(text);
+      };
+      reader.readAsText(file);
+    }
+
+    function parseAndApplyCsv(csvText) {
+      const lines = csvText.trim().split('\n');
+      if(lines.length < 2) { showToast('El archivo está vacío o no tiene filas válidas.', 'error'); return; }
+      
+      const parseLine = (line) => line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/(^"|"$)/g, '').trim());
+      
+      const headers = parseLine(lines[0]).map(h => h.toLowerCase());
+      const col = {
+        folio: headers.indexOf('folio'), client: headers.indexOf('cliente'),
+        concept: headers.indexOf('concepto'), amount: headers.indexOf('monto'),
+        status: headers.indexOf('estado'), date: headers.indexOf('fecha'),
+        channel: headers.indexOf('canal')
+      };
+
+      let totalMonto = 0;
+      let pagadosCount = 0;
+      let validRows = 0;
+      const channels = {};
+      const records = [];
+      const trendSum = [0,0,0,0];
+      let topClient = '';
+      let topClientMonto = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        if(!lines[i].trim()) continue;
+        const row = parseLine(lines[i]);
+        if(row.length < 4) continue;
+        
+        let montoStr = row[col.amount] || "0";
+        let montoNum = parseFloat(montoStr.replace(/[^0-9.-]+/g, '')) || 0;
+        
+        let client = row[col.client] || 'Cliente Desconocido';
+        let status = row[col.status] || 'Pendiente';
+        let ch = col.channel > -1 ? (row[col.channel] || 'Otros') : 'Directo';
+
+        totalMonto += montoNum;
+        if(status.toLowerCase() === 'pagado') pagadosCount++;
+        validRows++;
+
+        if(montoNum > topClientMonto) { topClientMonto = montoNum; topClient = client; }
+
+        channels[ch] = (channels[ch] || 0) + montoNum;
+        trendSum[i % 4] += montoNum;
+
+        records.push({
+          id: row[col.folio] || `TR-${100+i}`,
+          client: client,
+          service: row[col.concept] || 'Servicios Generales',
+          amount: `$${montoNum.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`,
+          status: ['Pagado','Pendiente','En Proceso'].includes(status) ? status : 'Pendiente',
+          date: row[col.date] || new Date().toISOString().split('T')[0]
+        });
+      }
+
+      if(validRows === 0) { showToast('No se encontraron registros válidos.', 'error'); return; }
+
+      const ticketPromedio = validRows > 0 ? (totalMonto / validRows) : 0;
+      const cobroRate = validRows > 0 ? (pagadosCount / validRows * 100) : 0;
+      
+      const chanNames = Object.keys(channels);
+      const chanVals = chanNames.map(k => Math.round((channels[k] / totalMonto)*100));
+
+      const customData = {
+        title: "Tus Datos (Prueba CSV)",
+        description: "Visualización en tiempo real de tu propio archivo. No se almacena en el servidor.",
+        sync: "Local: Cargado hace 1 seg",
+        kpis: {
+          v1: `$${totalMonto.toLocaleString('en-US')} USD`, b1: "↑ Trial",
+          v2: `$${Math.round(ticketPromedio).toLocaleString('en-US')} USD`, b2: "Ticket Prom.",
+          v3: `${validRows} Cuentas`, b3: "Importadas",
+          v4: `${Math.round(cobroRate)}%`, b4: "Tasa Cobro"
+        },
+        aiBullets: [
+          `El cliente principal en este dataset es ${topClient}, aportando un ticket clave para los resultados globales.`,
+          `La facturación total alcanza $${totalMonto.toLocaleString('en-US')} con un ${Math.round(cobroRate)}% de eficiencia de cobranza confirmada.`,
+          `El canal dominante de ingresos es ${chanNames[0] || 'Directo'}, lo que sugiere enfocar los recursos de retención ahí.`
+        ],
+        trendLabels: ["Periodo 1", "Periodo 2", "Periodo 3", "Periodo 4"],
+        incomeData: trendSum,
+        costData: trendSum.map(v => v * 0.4),
+        channelLabels: chanNames,
+        channelData: chanVals,
+        records: records
+      };
+
+      localStorage.setItem('metricsflow_custom_data', JSON.stringify(customData));
+      updateSelectAndLoadCustom(customData);
+      
+      closeDataSourceModal();
+      showToast('Dashboard actualizado exitosamente con tus datos.', 'success');
+    }
+
+    function updateSelectAndLoadCustom(data) {
+      WORKSPACES['custom'] = data;
+      const sel = document.getElementById('companySelect');
+      let opt = Array.from(sel.options).find(o => o.value === 'custom');
+      if(!opt) {
+        opt = document.createElement('option');
+        opt.value = 'custom';
+        opt.text = 'Datos de Empresa (Local)';
+        sel.appendChild(opt);
+      }
+      sel.value = 'custom';
+      currentWorkspace = 'custom';
+      applyWorkspaceData(data);
     }
 
     window.onload = () => {
       initCharts();
-      renderTable();
+      
+      const savedData = localStorage.getItem('metricsflow_custom_data');
+      if(savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          updateSelectAndLoadCustom(parsed);
+        } catch(e) {
+          renderTable();
+        }
+      } else {
+        renderTable();
+      }
     };
   </script>
 </body>
